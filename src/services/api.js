@@ -25,6 +25,24 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// A misrouted /api call can come back as HTML with a 200 status - an error
+// page, or index.html served by the SPA fallback. Axios would hand that to the
+// caller as a string, and the first .map() on it blanks the page. Treat any
+// non-JSON body as a failure so the UI shows an error instead.
+api.interceptors.response.use((response) => {
+  const contentType = response.headers?.["content-type"] ?? "";
+
+  if (typeof response.data === "string" && !contentType.includes("json")) {
+    return Promise.reject(
+      new Error(
+        "The API returned a non-JSON response. Check that /api reaches the backend."
+      )
+    );
+  }
+
+  return response;
+});
+
 export const categoryApi = {
   getAll: () => api.get("/Category"),
   getById: (id) => api.get(`/Category/${id}`),

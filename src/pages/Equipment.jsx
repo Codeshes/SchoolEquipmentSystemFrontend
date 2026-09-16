@@ -71,7 +71,13 @@ export default function Equipment() {
   async function loadCategories() {
     try {
       const response = await categoryApi.getAll();
-      setCategories(response.data);
+      // Must stay an array: categories.map() below runs on every render,
+      // so a non-array payload here blanks the whole page.
+      setCategories(
+        Array.isArray(response.data)
+          ? response.data
+          : response.data?.data ?? []
+      );
     } catch (requestError) {
       console.error("Failed to load categories:", requestError);
     }

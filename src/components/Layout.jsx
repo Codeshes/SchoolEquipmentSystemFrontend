@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
+import ErrorBoundary from "./ErrorBoundary";
 import Sidebar from "./Sidebar";
 import Topbar from "./TopBar";
 
@@ -41,7 +42,10 @@ function Layout() {
         />
 
         <div className="page-content">
-          <Outlet />
+          {/* keyed by route so navigating away clears a previous crash */}
+          <ErrorBoundary key={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>
