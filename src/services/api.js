@@ -1,8 +1,15 @@
 import axios from "axios";
 import { auth } from "./firebase.js";
 
+// Development: no VITE_API_URL, so this stays "/api" and the Vite proxy
+// forwards it to localhost:5011.
+// Production: the SPA is served by Vercel and the API lives on another host,
+// so VITE_API_URL supplies its absolute address (set in .env.production or
+// in the Vercel dashboard).
+const apiRoot = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: `${apiRoot}/api`,
   headers: {
     "Content-Type": "application/json",
   },
