@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Check,
   CheckCircle2,
   ClipboardList,
   Clock,
@@ -17,6 +18,7 @@ import {
 import { Navigate } from "react-router-dom";
 import Modal from "../components/Modal";
 import { useAuth } from "../context/AuthContext.jsx";
+import { isValidEmail } from "../utils/validation";
 
 // Drifting equipment icons in the backdrop. Purely decorative.
 const FLOATERS = [
@@ -63,6 +65,7 @@ function Login() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
@@ -109,13 +112,18 @@ function Login() {
       return;
     }
 
-    if (!email.trim()) {
-      setError("Please enter your email address.");
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email address.");
       return;
     }
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (isRegister && password !== confirmPassword) {
+      setError("The two passwords don't match.");
       return;
     }
 
@@ -128,6 +136,7 @@ function Login() {
         setVerifyPrompt({ email: email.trim(), reason: "registered" });
         setMode("signin");
         setFullName("");
+        setConfirmPassword("");
       } else {
         await loginWithEmail(email.trim(), password);
       }
@@ -203,6 +212,7 @@ function Login() {
     setError("");
     setNotice("");
     setPassword("");
+    setConfirmPassword("");
   }
 
   return (
@@ -277,6 +287,34 @@ function Login() {
               onChange={(event) => setPassword(event.target.value)}
             />
           </div>
+
+          {isRegister && (
+            <div
+              className={`login-field ${
+                confirmPassword && password !== confirmPassword
+                  ? "field-mismatch"
+                  : ""
+              }`}
+            >
+              <Lock size={16} />
+              <input
+                type="password"
+                autoComplete="new-password"
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+              />
+              {confirmPassword && password === confirmPassword && (
+                <Check size={15} className="field-ok" />
+              )}
+            </div>
+          )}
+
+          {isRegister && confirmPassword && password !== confirmPassword && (
+            <small className="field-hint field-hint-error">
+              Passwords don't match yet.
+            </small>
+          )}
 
           {!isRegister && (
             <button
