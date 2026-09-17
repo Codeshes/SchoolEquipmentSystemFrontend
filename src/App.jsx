@@ -32,6 +32,12 @@ function AdminRoute({ children }) {
   return isAdmin ? children : <Navigate to="/" replace />;
 }
 
+// User management belongs to the master admin alone.
+function MasterAdminRoute({ children }) {
+  const { isMasterAdmin } = useAuth();
+  return isMasterAdmin ? children : <Navigate to="/" replace />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -55,7 +61,7 @@ function App() {
           />
           <Route
             path="/users"
-            element={<AdminRoute><Users /></AdminRoute>}
+            element={<MasterAdminRoute><Users /></MasterAdminRoute>}
           />
           <Route path="/settings" element={<Settings />} />
         </Route>

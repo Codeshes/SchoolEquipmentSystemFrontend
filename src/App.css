@@ -2162,3 +2162,314 @@ tbody tr:hover {
   color: var(--muted);
   white-space: nowrap;
 }
+
+/* ---------- modal polish ---------- */
+
+/* The modal scrolls when it is taller than the viewport, which used to carry
+   the action buttons off the bottom. Pin them so Approve / Reject are always
+   reachable without scrolling, with a fade so content passes under cleanly. */
+.modal-actions {
+  position: sticky;
+  bottom: -22px;
+  z-index: 2;
+
+  margin: 22px -22px -22px;
+  padding: 16px 22px 18px;
+
+  background: linear-gradient(
+    to bottom,
+    rgba(17, 23, 45, 0),
+    #131931 38%
+  );
+}
+
+/* a little air under the last content block so it never sits flush */
+.modal > *:last-child {
+  margin-bottom: 0;
+}
+
+.modal .receipt-details:last-of-type {
+  margin-bottom: 4px;
+}
+
+/* slimmer, less intrusive scrollbar inside the modal */
+.modal {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167, 139, 250, 0.35) transparent;
+}
+
+.modal::-webkit-scrollbar {
+  width: 9px;
+}
+
+.modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+  background-color: rgba(167, 139, 250, 0.35);
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(167, 139, 250, 0.55);
+}
+
+/* ==========================================================================
+   Login page - animated backdrop
+   ========================================================================== */
+
+/* faint grid that pans forever, masked to fade out at the edges */
+.login-grid {
+  position: absolute;
+  inset: -60%;
+  z-index: 0;
+
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 54px 54px;
+
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 60%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 60%);
+
+  animation: login-grid-pan 18s linear infinite;
+}
+
+@keyframes login-grid-pan {
+  to {
+    transform: translate3d(54px, 54px, 0);
+  }
+}
+
+/* the blurred colour blobs now wander instead of sitting still */
+.login-glow {
+  z-index: 0;
+  animation: login-drift 19s ease-in-out infinite;
+}
+
+.glow-two {
+  animation-duration: 24s;
+  animation-delay: -7s;
+}
+
+.glow-three {
+  width: 340px;
+  height: 340px;
+
+  left: 45%;
+  top: 58%;
+
+  background: rgba(34, 197, 94, 0.09);
+
+  animation-duration: 29s;
+  animation-delay: -14s;
+}
+
+@keyframes login-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(70px, -45px, 0) scale(1.14);
+  }
+  66% {
+    transform: translate3d(-45px, 55px, 0) scale(0.92);
+  }
+}
+
+/* drifting equipment icons */
+.login-floaters {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.login-floater {
+  position: absolute;
+  color: rgba(167, 139, 250, 0.3);
+  animation: login-float 16s ease-in-out infinite;
+}
+
+.float-1 { left: 11%; top: 20%; animation-delay: 0s; }
+.float-2 { left: 82%; top: 26%; animation-delay: -3s; }
+.float-3 { left: 18%; top: 71%; animation-delay: -6s; }
+.float-4 { left: 76%; top: 68%; animation-delay: -9s; }
+.float-5 { left: 50%; top: 12%; animation-delay: -12s; }
+.float-6 { left: 60%; top: 84%; animation-delay: -15s; }
+
+@keyframes login-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-28px) rotate(9deg);
+    opacity: 0.75;
+  }
+}
+
+/* card sits above the backdrop and rises in */
+.login-card {
+  z-index: 1;
+  animation: login-card-in 750ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes login-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* each element inside staggers in after it */
+.login-card > * {
+  animation: login-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.login-card > *:nth-child(1) { animation-delay: 140ms; }
+.login-card > *:nth-child(2) { animation-delay: 210ms; }
+.login-card > *:nth-child(3) { animation-delay: 280ms; }
+.login-card > *:nth-child(4) { animation-delay: 350ms; }
+.login-card > *:nth-child(5) { animation-delay: 420ms; }
+.login-card > *:nth-child(6) { animation-delay: 490ms; }
+.login-card > *:nth-child(7) { animation-delay: 560ms; }
+
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* logo: rises in, then breathes, with a pulse ring */
+.login-card > .login-logo {
+  position: relative;
+  animation:
+    login-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) 140ms backwards,
+    logo-bob 4.5s ease-in-out 900ms infinite;
+}
+
+@keyframes logo-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+.login-logo::after {
+  content: "";
+
+  position: absolute;
+  inset: -5px;
+
+  border: 1px solid rgba(167, 139, 250, 0.55);
+  border-radius: 23px;
+
+  animation: logo-ring 3s ease-out 1s infinite;
+}
+
+@keyframes logo-ring {
+  0% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* light sweeping across the sign-in button */
+.google-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.google-button::after {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: -130%;
+
+  width: 55%;
+  height: 100%;
+
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(139, 92, 246, 0.22),
+    transparent
+  );
+
+  transform: skewX(-18deg);
+
+  animation: login-shine 3.8s ease-in-out infinite;
+}
+
+.google-button:disabled::after {
+  animation: none;
+}
+
+@keyframes login-shine {
+  0% {
+    left: -130%;
+  }
+  55%,
+  100% {
+    left: 140%;
+  }
+}
+
+/* small capability chips */
+.login-features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+
+  margin-top: 22px;
+}
+
+.login-features span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 7px 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  font-size: 10.5px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    transform 200ms ease;
+}
+
+.login-features span:hover {
+  color: #d9dded;
+  border-color: rgba(167, 139, 250, 0.45);
+  transform: translateY(-2px);
+}

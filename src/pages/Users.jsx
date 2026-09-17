@@ -13,7 +13,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { userApi } from "../services/api";
 
 function UsersPage() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, masterAdminEmail } = useAuth();
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -158,6 +158,11 @@ function UsersPage() {
                     user.email?.toLowerCase() ===
                       currentUser.email.toLowerCase();
 
+                  // The master admin cannot be demoted or removed by anyone.
+                  const isMaster =
+                    user.email?.toLowerCase() ===
+                    masterAdminEmail?.toLowerCase();
+
                   return (
                     <tr key={userId}>
                       <td>{user.fullName ?? user.name ?? "-"}</td>
@@ -166,14 +171,21 @@ function UsersPage() {
                         <label className="role-control">
                           <ShieldCheck size={15} />
                           <select
-                            value={role}
-                            disabled={savingId === userId}
+                            value={isMaster ? "Admin" : role}
+                            disabled={savingId === userId || isMaster}
+                            title={
+                              isMaster
+                                ? "The master admin's role is fixed"
+                                : "Change this user's role"
+                            }
                             onChange={(event) =>
                               updateRole(user, event.target.value)
                             }
                           >
                             <option value="Teacher">Teacher</option>
-                            <option value="Admin">Admin</option>
+                            <option value="Admin">
+                              {isMaster ? "Master Admin" : "Admin"}
+                            </option>
                           </select>
                         </label>
                       </td>
@@ -187,11 +199,13 @@ function UsersPage() {
                           <button
                             className="action-button delete"
                             title={
-                              isSelf
-                                ? "You cannot delete your own account"
-                                : "Delete user"
+                              isMaster
+                                ? "The master admin cannot be deleted"
+                                : isSelf
+                                  ? "You cannot delete your own account"
+                                  : "Delete user"
                             }
-                            disabled={isSelf}
+                            disabled={isSelf || isMaster}
                             onClick={() => {
                               setDeleteError("");
                               setPendingDelete(user);

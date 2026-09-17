@@ -13,7 +13,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 function Sidebar({ isOpen, onClose }) {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, isMasterAdmin, logout } = useAuth();
 
   const menu = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -22,8 +22,10 @@ function Sidebar({ isOpen, onClose }) {
       ? [
           { name: "Categories", path: "/categories", icon: Folder },
           { name: "Requests", path: "/requests", icon: ClipboardList },
-          { name: "Users", path: "/users", icon: Users },
         ]
+      : []),
+    ...(isMasterAdmin
+      ? [{ name: "Users", path: "/users", icon: Users }]
       : []),
     { name: "My Requests", path: "/my-requests", icon: UserRound },
     { name: "Settings", path: "/settings", icon: Settings },
