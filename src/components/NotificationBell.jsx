@@ -4,21 +4,27 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext.jsx";
 import { requestApi } from "../services/api";
+import { accountKey, notificationsEnabled } from "../utils/preferences";
 
-const SEEN_KEY = "seen-notifications";
 const REFRESH_MS = 60000;
 
-function readSeen() {
+// Keyed per account - one person marking things read must not mark them
+// read for the next person who signs in on this computer.
+function seenKey(email) {
+  return accountKey("seen-notifications", email);
+}
+
+function readSeen(email) {
   try {
-    return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) ?? "[]"));
+    return new Set(JSON.parse(localStorage.getItem(seenKey(email)) ?? "[]"));
   } catch {
     return new Set();
   }
 }
 
-function saveSeen(keys) {
+function saveSeen(email, keys) {
   try {
-    localStorage.setItem(SEEN_KEY, JSON.stringify([...keys]));
+    localStorage.setItem(seenKey(email), JSON.stringify([...keys]));
   } catch {
     // storage can be unavailable in private windows - ignore
   }
@@ -43,8 +49,15 @@ function NotificationBell() {
 
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
-  const [seen, setSeen] = useState(readSeen);
+  const [seen, setSeen] = useState(() => readSeen(user?.email));
   const panelRef = useRef(null);
+
+  const muted = !notificationsEnabled(user?.email);
+
+  // Switching accounts loads that account's own read list.
+  useEffect(() => {
+    setSeen(readSeen(user?.email));
+  }, [user?.email]);
 
   const build = useCallback(
     (requests) => {
@@ -130,20 +143,22 @@ function NotificationBell() {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
 
-  const unread = items.filter((item) => !seen.has(item.key));
+  // The Settings toggle turns the badge off. The list is still there for
+  // anyone who opens the bell on purpose.
+  const unread = muted ? [] : items.filter((item) => !seen.has(item.key));
 
   function markAll() {
     const next = new Set(seen);
     items.forEach((item) => next.add(item.key));
     setSeen(next);
-    saveSeen(next);
+    saveSeen(user?.email, next);
   }
 
   function openItem(item) {
     const next = new Set(seen);
     next.add(item.key);
     setSeen(next);
-    saveSeen(next);
+    saveSeen(user?.email, next);
     setOpen(false);
     navigate(item.to, { state: { requestId: item.requestId } });
   }
@@ -165,6 +180,8 @@ function NotificationBell() {
         <div className="notification-panel">
           <div className="notification-head">
             <strong>Notifications</strong>
+
+            {muted && <span className="notification-muted">Alerts off</span>}
 
             {unread.length > 0 && (
               <button className="notification-mark" onClick={markAll}>

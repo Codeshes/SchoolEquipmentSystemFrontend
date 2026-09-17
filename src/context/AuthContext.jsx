@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -32,6 +38,15 @@ export function AuthProvider({ children }) {
   const [suspended, setSuspended] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Firebase mutates its own user object in place, so React never sees a
+  // profile edit. Mirroring the two display fields here gives the app
+  // something that actually changes, and it is wiped on every sign-in, so
+  // one account can never show another account's name.
+  const [profile, setProfile] = useState({
+    displayName: null,
+    photoURL: null,
+  });
+
   useEffect(() => {
     return onAuthStateChanged(auth, async (currentUser) => {
       // Email/password accounts must confirm their address first. Google
@@ -43,11 +58,16 @@ export function AuthProvider({ children }) {
       if (currentUser && usesPassword && !currentUser.emailVerified) {
         setUser(null);
         setStoredRole(null);
+        setProfile({ displayName: null, photoURL: null });
         setLoading(false);
         return;
       }
 
       setUser(currentUser);
+      setProfile({
+        displayName: currentUser?.displayName ?? null,
+        photoURL: currentUser?.photoURL ?? null,
+      });
 
       if (currentUser?.email) {
         try {
@@ -62,6 +82,7 @@ export function AuthProvider({ children }) {
             await signOut(auth);
             setUser(null);
             setStoredRole(null);
+            setProfile({ displayName: null, photoURL: null });
             setSuspended(true);
             setLoading(false);
             return;
@@ -146,9 +167,58 @@ export function AuthProvider({ children }) {
     return { verificationSent: true, email };
   }
 
+  // Settings saves through here. The name lives on the Firebase account and
+  // in our own Users table - never in browser storage, which is shared by
+  // every account that signs in on this computer.
+  async function updateDisplayProfile({ displayName, photoURL }) {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      throw new Error("You are not signed in.");
+    }
+
+    const name = displayName?.trim() ?? "";
+    const photo = photoURL?.trim() ?? "";
+
+    await updateProfile(currentUser, {
+      displayName: name || currentUser.email,
+      photoURL: photo || null,
+    });
+
+    await currentUser.reload();
+
+    setProfile({
+      displayName: auth.currentUser?.displayName ?? null,
+      photoURL: auth.currentUser?.photoURL ?? null,
+    });
+
+    // Keep the database copy in step so admins see the same name on the
+    // Users page and on every request this person has made.
+    await userApi.sync({
+      email: currentUser.email,
+      fullName: name || currentUser.email,
+    });
+  }
+
   async function logout() {
+    setProfile({ displayName: null, photoURL: null });
     return signOut(auth);
   }
+
+  // What the app reads. Built from the live Firebase user plus the mirrored
+  // profile fields, so a saved name reaches the sidebar and top bar at once.
+  const account = useMemo(() => {
+    if (!user) return null;
+
+    return {
+      uid: user.uid,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      providerData: user.providerData,
+      displayName: profile.displayName ?? user.displayName ?? null,
+      photoURL: profile.photoURL ?? user.photoURL ?? null,
+    };
+  }, [user, profile]);
 
   const isMasterAdmin =
     user?.email?.toLowerCase() === MASTER_ADMIN_EMAIL;
@@ -165,7 +235,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: account,
         role,
         isAdmin,
         isMasterAdmin,
@@ -176,6 +246,7 @@ export function AuthProvider({ children }) {
         registerWithEmail,
         resendVerification,
         resetPassword,
+        updateDisplayProfile,
         suspended,
         logout,
       }}

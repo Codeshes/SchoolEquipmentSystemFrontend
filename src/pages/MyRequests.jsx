@@ -145,6 +145,14 @@ function MyRequests() {
     URL.revokeObjectURL(url);
   }
 
+  // Only a request still waiting for a decision can be withdrawn. If none
+  // of them can, the column would be a row of blanks - so it isn't drawn.
+  function canCancel(request) {
+    return (request.status ?? "Pending") === "Pending" && !request.isReceipt;
+  }
+
+  const showActions = requests.some(canCancel);
+
   return (
     <div>
       <div className="page-header">
@@ -190,7 +198,7 @@ function MyRequests() {
                   <th>Status</th>
                   <th>Requested</th>
                   <th>Receipt</th>
-                  <th>Actions</th>
+                  {showActions && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -227,20 +235,24 @@ function MyRequests() {
                           View receipt
                         </button>
                       </td>
-                      <td>
-                        {status === "Pending" && !request.isReceipt && (
-                          <button
-                            className="secondary-button"
-                            onClick={() => {
-                              setCancelError("");
-                              setPendingCancel(request);
-                            }}
-                          >
-                            <X size={14} />
-                            Cancel
-                          </button>
-                        )}
-                      </td>
+                      {showActions && (
+                        <td>
+                          {canCancel(request) ? (
+                            <button
+                              className="secondary-button"
+                              onClick={() => {
+                                setCancelError("");
+                                setPendingCancel(request);
+                              }}
+                            >
+                              <X size={14} />
+                              Cancel
+                            </button>
+                          ) : (
+                            <span className="cell-empty">&mdash;</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

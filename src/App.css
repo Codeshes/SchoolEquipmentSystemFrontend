@@ -2925,3 +2925,300 @@ tbody tr:hover {
   margin-top: 2px;
   color: #fca5a5;
 }
+
+/* =========================
+   LOGIN - ROTATING TAGLINE
+========================= */
+
+/* Fixed height so the card doesn't jump as the lines swap. */
+.tagline-rotator {
+  position: relative;
+
+  height: 19px;
+  margin: 2px 0 14px;
+
+  overflow: hidden;
+}
+
+.tagline-line {
+  display: block;
+
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 19px;
+  white-space: nowrap;
+
+  background: linear-gradient(
+    100deg,
+    #c4b5fd 0%,
+    #e9d5ff 32%,
+    #93c5fd 64%,
+    #c4b5fd 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+
+  animation:
+    tagline-in 620ms cubic-bezier(0.16, 1, 0.3, 1) backwards,
+    tagline-sheen 5s linear infinite;
+}
+
+@keyframes tagline-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes tagline-sheen {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 220% 50%;
+  }
+}
+
+/* =========================
+   LOGIN - EQUIPMENT MARQUEE
+========================= */
+
+/* Leaves room for the marquee and the copyright underneath it. */
+.login-page {
+  padding-bottom: 104px;
+}
+
+.login-marquee {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 52px;
+  z-index: 1;
+
+  overflow: hidden;
+  pointer-events: auto;
+
+  /* Fade both ends so items slide in and out instead of snapping. */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
+
+  animation: login-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) 620ms backwards;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 10px;
+
+  /* The list is rendered twice, so sliding exactly half way and looping
+     back to zero reads as one unbroken belt. */
+  animation: marquee-scroll 38s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+
+  padding: 7px 14px;
+
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: #79839e;
+
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+
+  transition:
+    color 240ms ease,
+    border-color 240ms ease,
+    background 240ms ease,
+    transform 240ms ease;
+}
+
+.marquee-item svg {
+  color: rgba(167, 139, 250, 0.75);
+  transition: color 240ms ease;
+}
+
+.marquee-item:hover {
+  color: #e6e9f2;
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(167, 139, 250, 0.4);
+  transform: translateY(-2px);
+}
+
+.marquee-item:hover svg {
+  color: #c4b5fd;
+}
+
+/* The drifting icons wander sideways as well as up, so the backdrop
+   doesn't look like six things bobbing in place. */
+@keyframes login-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 0.28;
+  }
+  25% {
+    transform: translate3d(16px, -16px, 0) rotate(6deg);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(-8px, -30px, 0) rotate(-5deg);
+    opacity: 0.72;
+  }
+  75% {
+    transform: translate3d(-18px, -14px, 0) rotate(4deg);
+    opacity: 0.45;
+  }
+}
+
+/* Small screens: the floaters get in the way of the card, and a long
+   tagline needs two lines of room. */
+@media (max-width: 720px) {
+  .login-floaters {
+    display: none;
+  }
+
+  .tagline-rotator {
+    height: 34px;
+  }
+
+  .tagline-line {
+    white-space: normal;
+    line-height: 17px;
+  }
+
+  .marquee-track {
+    animation-duration: 26s;
+  }
+}
+
+/* =========================
+   MISC
+========================= */
+
+.cell-empty {
+  color: #4f5872;
+}
+
+.notification-muted {
+  margin-right: auto;
+  margin-left: 8px;
+
+  padding: 2px 8px;
+
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #8b93aa;
+
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .tagline-line {
+    animation: none !important;
+  }
+}
+
+/* =========================
+   LOGIN - HOVER SMOOTHNESS
+========================= */
+
+/* The card is frosted glass: backdrop-filter blurs whatever sits behind it.
+   Moving it on hover forces the browser to re-sample and re-blur that
+   backdrop on every frame - and the backdrop here is three animated blobs
+   plus a panning grid. That is the stutter. The card keeps its hover
+   response, just through colour and shadow, which cost nothing. */
+.login-page .glass-card {
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.login-page .glass-card:hover {
+  transform: none;
+  border-color: rgba(167, 139, 250, 0.3);
+  box-shadow:
+    0 26px 74px rgba(0, 0, 0, 0.32),
+    inset 0 1px rgba(255, 255, 255, 0.07);
+}
+
+/* Blurred blobs: scaling a 100px blur means re-rasterising the blur every
+   frame. Drifting alone is composited on the GPU and looks the same. */
+.login-glow {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+@keyframes login-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  33% {
+    transform: translate3d(74px, -48px, 0);
+  }
+  66% {
+    transform: translate3d(-48px, 58px, 0);
+  }
+}
+
+/* Hand the moving layers to the GPU so they never touch the main thread. */
+.login-grid,
+.login-floater,
+.marquee-track {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.marquee-item {
+  transform: translateZ(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-glow,
+  .login-grid,
+  .login-floater,
+  .marquee-track {
+    will-change: auto;
+  }
+}

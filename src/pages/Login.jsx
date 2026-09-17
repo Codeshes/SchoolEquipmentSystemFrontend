@@ -1,19 +1,31 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  Cable,
+  Camera,
   Check,
   CheckCircle2,
   ClipboardList,
   Clock,
+  FlaskConical,
   Folder,
   Globe,
+  Laptop,
   LoaderCircle,
   Lock,
   Mail,
   MailCheck,
+  Mic,
+  Monitor,
   Package,
+  Presentation,
+  Printer,
+  Projector,
   ShieldCheck,
+  Speaker,
+  Tablet,
   User,
   Users,
+  Video,
 } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import Modal from "../components/Modal";
@@ -28,6 +40,34 @@ const FLOATERS = [
   { Icon: Users, key: "float-4" },
   { Icon: Clock, key: "float-5" },
   { Icon: CheckCircle2, key: "float-6" },
+];
+
+// The one-line pitch, cycled under the heading.
+const TAGLINES = [
+  "Every projector, laptop and camera in one place.",
+  "Teachers borrow in seconds.",
+  "Admins approve with one tap.",
+  "Stock counts itself.",
+  "Nothing goes missing again.",
+];
+
+const TAGLINE_MS = 3400;
+
+// Scrolls across the bottom of the page. Decorative, but it shows at a
+// glance the kind of thing the system keeps track of.
+const MARQUEE_ITEMS = [
+  { Icon: Projector, label: "Projectors" },
+  { Icon: Laptop, label: "Laptops" },
+  { Icon: Camera, label: "Cameras" },
+  { Icon: Mic, label: "Microphones" },
+  { Icon: Video, label: "Camcorders" },
+  { Icon: Speaker, label: "Speakers" },
+  { Icon: Tablet, label: "Tablets" },
+  { Icon: Printer, label: "Printers" },
+  { Icon: Cable, label: "Extension cords" },
+  { Icon: Monitor, label: "Monitors" },
+  { Icon: Presentation, label: "Whiteboards" },
+  { Icon: FlaskConical, label: "Lab kits" },
 ];
 
 const AUTH_MESSAGES = {
@@ -74,6 +114,16 @@ function Login() {
   const [resending, setResending] = useState(false);
   const [resendNote, setResendNote] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [taglineIndex, setTaglineIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(
+      () => setTaglineIndex((index) => (index + 1) % TAGLINES.length),
+      TAGLINE_MS
+    );
+
+    return () => clearInterval(timer);
+  }, []);
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -238,6 +288,12 @@ function Login() {
 
         <span className="eyebrow">SCHOOL EQUIPMENT</span>
 
+        <div className="tagline-rotator">
+          <span className="tagline-line" key={taglineIndex}>
+            {TAGLINES[taglineIndex]}
+          </span>
+        </div>
+
         <h1 className="login-swap" key={`title-${mode}`}>
           {isRegister ? "Create your account" : "Welcome back"}
         </h1>
@@ -401,6 +457,17 @@ function Login() {
         <div className="login-security">
           <ShieldCheck size={16} />
           Secure authentication
+        </div>
+      </div>
+
+      <div className="login-marquee" aria-hidden="true">
+        <div className="marquee-track">
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map(({ Icon, label }, index) => (
+            <span className="marquee-item" key={`${label}-${index}`}>
+              <Icon size={15} />
+              {label}
+            </span>
+          ))}
         </div>
       </div>
 
