@@ -18,6 +18,15 @@ import {
   stockClass,
   stockLabel,
 } from "../utils/stock";
+import {
+  LIMITS,
+  checkText,
+  checkWholeNumber,
+  futureIso,
+  isBeyond,
+  isPastDate,
+  todayIso,
+} from "../utils/validation";
 
 export default function Equipment() {
   const { isAdmin, user } = useAuth();
@@ -129,22 +138,52 @@ export default function Equipment() {
     const quantity = Number(form.quantity);
     const availableQuantity = Number(form.availableQuantity);
 
-    if (!form.name.trim()) {
-      setError("Equipment name is required.");
+    const nameError = checkText(
+      form.name,
+      "Equipment name",
+      LIMITS.equipmentName
+    );
+    if (nameError) {
+      setError(nameError);
       return;
     }
 
-    if (!Number.isInteger(quantity) || quantity < 1) {
-      setError("Quantity must be a whole number greater than zero.");
+    const descriptionError = checkText(
+      form.description,
+      "Description",
+      LIMITS.description,
+      { required: false }
+    );
+    if (descriptionError) {
+      setError(descriptionError);
       return;
     }
 
-    if (
-      !Number.isInteger(availableQuantity) ||
-      availableQuantity < 0 ||
-      availableQuantity > quantity
-    ) {
-      setError("Available quantity must be between zero and total quantity.");
+    const quantityError = checkWholeNumber(form.quantity, "Quantity", {
+      min: 1,
+      max: 100000,
+    });
+    if (quantityError) {
+      setError(quantityError);
+      return;
+    }
+
+    const availableError = checkWholeNumber(
+      form.availableQuantity,
+      "Available quantity",
+      { min: 0, max: quantity }
+    );
+    if (availableError) {
+      setError(
+        availableQuantity > quantity
+          ? "Available quantity cannot be more than the total quantity."
+          : availableError
+      );
+      return;
+    }
+
+    if (!form.categoryId) {
+      setError("Choose a category for this equipment.");
       return;
     }
 
@@ -216,6 +255,33 @@ export default function Equipment() {
 
     if (!requestPurpose.trim()) {
       setRequestError("Please provide what the equipment will be used for.");
+      return;
+    }
+
+    const reasonError = checkText(requestReason, "Reason", LIMITS.reason);
+    if (reasonError) {
+      setRequestError(reasonError);
+      return;
+    }
+
+    const purposeError = checkText(requestPurpose, "Purpose", LIMITS.purpose);
+    if (purposeError) {
+      setRequestError(purposeError);
+      return;
+    }
+
+    // The picker blocks past days, but a typed date can still slip through.
+    if (isPastDate(requestReturnDate)) {
+      setRequestError(
+        "The expected return date cannot be in the past. Pick today or later."
+      );
+      return;
+    }
+
+    if (isBeyond(requestReturnDate, 365)) {
+      setRequestError(
+        "The expected return date cannot be more than a year away."
+      );
       return;
     }
 
@@ -493,6 +559,7 @@ export default function Equipment() {
             <label htmlFor="equipment-name">Name</label>
             <input
               id="equipment-name"
+              maxLength={LIMITS.equipmentName}
               value={form.name}
               onChange={(event) => updateForm("name", event.target.value)}
               placeholder="e.g. Projector"
@@ -505,6 +572,7 @@ export default function Equipment() {
             <textarea
               id="equipment-description"
               rows="3"
+              maxLength={LIMITS.description}
               value={form.description}
               onChange={(event) =>
                 updateForm("description", event.target.value)
@@ -569,7 +637,7 @@ export default function Equipment() {
                     updateForm("categoryId", event.target.value)
                   }
                 >
-                  <option value="">No category</option>
+                  <option value="">Select a category</option>
                   {categories.map((category) => (
                     <option
                       key={category.categoryId}
@@ -632,6 +700,7 @@ export default function Equipment() {
             <textarea
               id="request-reason"
               rows="2"
+              maxLength={LIMITS.reason}
               value={requestReason}
               onChange={(event) => setRequestReason(event.target.value)}
               placeholder="Why do you need this equipment?"
@@ -642,6 +711,7 @@ export default function Equipment() {
             <textarea
               id="request-purpose"
               rows="2"
+              maxLength={LIMITS.purpose}
               value={requestPurpose}
               onChange={(event) => setRequestPurpose(event.target.value)}
               placeholder="What will it be used for?"
@@ -652,6 +722,8 @@ export default function Equipment() {
             <input
               id="request-return-date"
               type="date"
+              min={todayIso()}
+              max={futureIso(365)}
               value={requestReturnDate}
               onChange={(event) => setRequestReturnDate(event.target.value)}
             />

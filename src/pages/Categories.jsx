@@ -11,6 +11,7 @@ import {
 import ConfirmDialog from "../components/ConfirmDialog";
 import Modal from "../components/Modal";
 import { categoryApi } from "../services/api";
+import { LIMITS, checkText } from "../utils/validation";
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
@@ -75,8 +76,24 @@ export default function Categories() {
     event.preventDefault();
     setError("");
 
-    if (!form.name.trim()) {
-      setError("Category name is required.");
+    const nameError = checkText(
+      form.name,
+      "Category name",
+      LIMITS.categoryName
+    );
+    if (nameError) {
+      setError(nameError);
+      return;
+    }
+
+    const descriptionError = checkText(
+      form.description,
+      "Description",
+      LIMITS.description,
+      { required: false }
+    );
+    if (descriptionError) {
+      setError(descriptionError);
       return;
     }
 
@@ -240,6 +257,7 @@ export default function Categories() {
             <label htmlFor="category-name">Name</label>
             <input
               id="category-name"
+              maxLength={LIMITS.categoryName}
               value={form.name}
               onChange={(event) =>
                 setForm({ ...form, name: event.target.value })
@@ -254,6 +272,7 @@ export default function Categories() {
             <textarea
               id="category-description"
               rows="4"
+              maxLength={LIMITS.description}
               value={form.description}
               onChange={(event) =>
                 setForm({ ...form, description: event.target.value })

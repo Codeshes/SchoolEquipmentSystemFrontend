@@ -2895,3 +2895,12 @@ tbody tr:hover {
   display: flex;
   flex-direction: column;
 }
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #6f7892;
+}
