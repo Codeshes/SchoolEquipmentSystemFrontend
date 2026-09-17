@@ -2473,3 +2473,425 @@ tbody tr:hover {
   border-color: rgba(167, 139, 250, 0.45);
   transform: translateY(-2px);
 }
+
+/* ---------- login: email form ---------- */
+.login-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.login-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 0 13px;
+
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 11px;
+
+  color: #7f89a5;
+  background: rgba(7, 11, 27, 0.5);
+
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.login-field:focus-within {
+  border-color: rgba(167, 139, 250, 0.7);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14);
+}
+
+.login-field input {
+  width: 100%;
+  padding: 13px 0;
+
+  border: none;
+  outline: none;
+
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+}
+
+.login-field input::placeholder {
+  color: #6f7892;
+}
+
+.login-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+  padding: 13px;
+}
+
+.login-divider {
+  position: relative;
+  margin: 18px 0;
+  text-align: center;
+}
+
+.login-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+.login-divider span {
+  position: relative;
+  padding: 0 12px;
+
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #6f7892;
+  background: #151b33;
+}
+
+.login-switch {
+  display: block;
+  width: 100%;
+
+  margin-top: 16px;
+
+  border: none;
+  background: none;
+
+  font-size: 12px;
+  color: #a78bfa;
+
+  transition: color 180ms ease;
+}
+
+.login-switch:hover {
+  color: #c4b5fd;
+}
+
+/* ---------- status / category filter tabs ---------- */
+.filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin-bottom: 18px;
+}
+
+.filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 14px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--glass);
+
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 160ms ease;
+}
+
+.filter-tab:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.filter-tab.active {
+  color: #f1f3ff;
+  border-color: rgba(167, 139, 250, 0.55);
+  background: rgba(139, 92, 246, 0.16);
+}
+
+.filter-count {
+  min-width: 20px;
+  padding: 2px 6px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.filter-tab.active .filter-count {
+  color: #ede9fe;
+  background: rgba(167, 139, 250, 0.3);
+}
+
+.login-notice {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+
+  border: 1px solid rgba(74, 222, 128, 0.32);
+  border-radius: 11px;
+
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.1);
+
+  animation: panel-in 220ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* ---------- sign in <-> sign up transition ---------- */
+
+/* These elements carry a React key tied to the mode, so switching remounts
+   them and replays the animation. The card's data-mode sets which side they
+   slide in from, so the motion reads as a direction of travel. */
+.login-card > .login-swap,
+.login-switch .login-swap {
+  animation: login-swap-in 440ms cubic-bezier(0.16, 1, 0.3, 1) 60ms backwards;
+}
+
+.login-card[data-mode="register"] .login-swap {
+  --swap-from: 26px;
+}
+
+.login-card[data-mode="signin"] .login-swap {
+  --swap-from: -26px;
+}
+
+@keyframes login-swap-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--swap-from, 20px)) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* inputs cascade in behind the form so the panel doesn't arrive all at once */
+.login-form .login-field {
+  animation: login-field-in 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.login-form .login-field:nth-of-type(1) { animation-delay: 110ms; }
+.login-form .login-field:nth-of-type(2) { animation-delay: 175ms; }
+.login-form .login-field:nth-of-type(3) { animation-delay: 240ms; }
+
+.login-form .login-submit {
+  animation: login-field-in 420ms cubic-bezier(0.16, 1, 0.3, 1) 300ms backwards;
+}
+
+@keyframes login-field-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* the card grows or shrinks as the name field comes and goes */
+.login-card {
+  transition: min-height 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-switch {
+  overflow: hidden;
+}
+
+.login-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- email verification prompt ---------- */
+.verify-prompt {
+  text-align: center;
+}
+
+.verify-icon {
+  width: 56px;
+  height: 56px;
+
+  display: grid;
+  place-items: center;
+
+  margin: 0 auto 16px;
+
+  border-radius: 17px;
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.13);
+
+  animation: verify-pop 520ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes verify-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-8deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.verify-prompt h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  color: #f8f9ff;
+}
+
+.verify-prompt > p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #d9dded;
+  overflow-wrap: anywhere;
+}
+
+.verify-prompt strong {
+  color: #c4b5fd;
+}
+
+.verify-steps {
+  margin: 18px 0 14px;
+  padding: 16px 18px 16px 34px;
+
+  text-align: left;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(7, 11, 27, 0.35);
+}
+
+.verify-steps li {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #d9dded;
+}
+
+.verify-steps li:last-child {
+  margin-bottom: 0;
+}
+
+.verify-steps li::marker {
+  color: #a78bfa;
+  font-weight: 700;
+}
+
+.verify-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.verify-note {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 10px;
+
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #c9cfe6;
+  background: rgba(139, 92, 246, 0.1);
+
+  animation: panel-in 200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* ---------- copyright ---------- */
+.login-footer {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  z-index: 1;
+
+  padding: 0 20px;
+
+  font-size: 10.5px;
+  line-height: 1.5;
+  text-align: center;
+  color: #5b6480;
+
+  animation: login-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) 700ms backwards;
+}
+
+.app-copyright {
+  margin: 14px 0 0;
+
+  font-size: 9.5px;
+  line-height: 1.5;
+  text-align: center;
+  color: #5b6480;
+}
+
+/* ---------- overdue + cancelled + forgot password ---------- */
+.overdue-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  margin-top: 5px;
+
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.14);
+
+  animation: overdue-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes overdue-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.12);
+  }
+}
+
+.status.request-cancelled {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.13);
+}
+
+.login-forgot {
+  align-self: flex-end;
+
+  margin: -2px 2px 2px;
+
+  border: none;
+  background: none;
+
+  font-size: 11px;
+  color: #8b93ad;
+
+  transition: color 180ms ease;
+}
+
+.login-forgot:hover:not(:disabled) {
+  color: #a78bfa;
+}
+
+.login-forgot:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, Clock, LoaderCircle } from "lucide-react";
+import { AlertTriangle, ClipboardList, Clock, LoaderCircle, X } from "lucide-react";
 
 import GlassCard from "../components/GlassCard";
 import Modal from "../components/Modal";
 import { useAuth } from "../context/AuthContext.jsx";
 import { requestApi } from "../services/api";
-import { decidedAt, formatDateOnly, formatDateTime } from "../utils/datetime";
+import ConfirmDialog from "../components/ConfirmDialog";
+import {
+  daysOverdue,
+  decidedAt,
+  formatDateOnly,
+  formatDateTime,
+  isOverdue,
+} from "../utils/datetime";
 
 function MyRequests() {
   const { user } = useAuth();
@@ -13,6 +20,9 @@ function MyRequests() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [pendingCancel, setPendingCancel] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
 
   useEffect(() => {
     loadRequests();
@@ -50,6 +60,27 @@ function MyRequests() {
       setError("Unable to load your requests right now.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCancel() {
+    const requestId = pendingCancel?.requestId ?? pendingCancel?.id;
+    if (!requestId) return;
+
+    try {
+      setCancelling(true);
+      setCancelError("");
+      await requestApi.cancel(requestId, user?.email ?? "");
+      setPendingCancel(null);
+      await loadRequests();
+    } catch (requestError) {
+      console.error("Failed to cancel request:", requestError);
+      setCancelError(
+        requestError.response?.data?.message ??
+          "Unable to cancel this request."
+      );
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -159,6 +190,7 @@ function MyRequests() {
                   <th>Status</th>
                   <th>Requested</th>
                   <th>Receipt</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,6 +206,12 @@ function MyRequests() {
                         <span className={`status request-${statusClass}`}>
                           {status}
                         </span>
+                        {isOverdue(request) && (
+                          <span className="status overdue-chip">
+                            <AlertTriangle size={11} />
+                            {daysOverdue(request)}d overdue
+                          </span>
+                        )}
                         {decidedAt(request) && (
                           <small className="status-stamp">
                             {formatDateTime(decidedAt(request))}
@@ -189,6 +227,20 @@ function MyRequests() {
                           View receipt
                         </button>
                       </td>
+                      <td>
+                        {status === "Pending" && !request.isReceipt && (
+                          <button
+                            className="secondary-button"
+                            onClick={() => {
+                              setCancelError("");
+                              setPendingCancel(request);
+                            }}
+                          >
+                            <X size={14} />
+                            Cancel
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -197,6 +249,17 @@ function MyRequests() {
           </div>
         )}
       </GlassCard>
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingCancel)}
+        title="Cancel this request"
+        message="Withdraw this borrow request? It stays in your history as cancelled, and you can submit a new one any time."
+        confirmLabel="Cancel request"
+        working={cancelling}
+        error={cancelError}
+        onConfirm={handleCancel}
+        onCancel={() => !cancelling && setPendingCancel(null)}
+      />
 
       <Modal
         isOpen={Boolean(selectedReceipt)}

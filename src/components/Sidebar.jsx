@@ -80,6 +80,12 @@ function Sidebar({ isOpen, onClose }) {
           <LogOut size={18} />
           Logout
         </button>
+
+        <p className="app-copyright">
+          &copy; {new Date().getFullYear()} School Equipment
+          <br />
+          Management System
+        </p>
       </div>
     </aside>
   );

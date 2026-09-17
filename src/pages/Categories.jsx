@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Folder, LoaderCircle, Plus, Search, Trash2 } from "lucide-react";
+import {
+  Folder,
+  LoaderCircle,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 
 import ConfirmDialog from "../components/ConfirmDialog";
 import Modal from "../components/Modal";
@@ -11,6 +18,7 @@ export default function Categories() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", description: "" });
@@ -40,13 +48,27 @@ export default function Categories() {
   }
 
   function openCreateModal() {
+    setEditingId(null);
     setForm({ name: "", description: "" });
     setError("");
     setIsModalOpen(true);
   }
 
-  function closeCreateModal() {
-    if (!saving) setIsModalOpen(false);
+  function openEditModal(category) {
+    setEditingId(category.categoryId);
+    setForm({
+      name: category.name ?? "",
+      description: category.description ?? "",
+    });
+    setError("");
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    if (!saving) {
+      setIsModalOpen(false);
+      setEditingId(null);
+    }
   }
 
   async function handleSubmit(event) {
@@ -58,19 +80,31 @@ export default function Categories() {
       return;
     }
 
+    const payload = {
+      name: form.name.trim(),
+      description: form.description.trim(),
+    };
+
     try {
       setSaving(true);
-      await categoryApi.create({
-        name: form.name.trim(),
-        description: form.description.trim(),
-      });
+
+      if (editingId) {
+        await categoryApi.update(editingId, {
+          ...payload,
+          categoryId: editingId,
+        });
+      } else {
+        await categoryApi.create(payload);
+      }
+
       setIsModalOpen(false);
+      setEditingId(null);
       await loadCategories();
     } catch (requestError) {
-      console.error("Failed to create category:", requestError);
+      console.error("Failed to save category:", requestError);
       setError(
         requestError.response?.data?.message ??
-          "Unable to create category. Please try again."
+          "Unable to save this category. Please try again."
       );
     } finally {
       setSaving(false);
@@ -170,6 +204,14 @@ export default function Categories() {
                   <td>
                     <div className="table-actions">
                       <button
+                        className="action-button edit"
+                        title="Edit category"
+                        onClick={() => openEditModal(category)}
+                      >
+                        <Pencil size={15} />
+                      </button>
+
+                      <button
                         className="action-button delete"
                         title="Delete category"
                         onClick={() => {
@@ -190,8 +232,8 @@ export default function Categories() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={closeCreateModal}
-        title="Add Category"
+        onClose={closeModal}
+        title={editingId ? "Edit Category" : "Add Category"}
       >
         <form className="form" onSubmit={handleSubmit}>
           <div className="form-group">
@@ -226,14 +268,18 @@ export default function Categories() {
             <button
               type="button"
               className="secondary-button"
-              onClick={closeCreateModal}
+              onClick={closeModal}
               disabled={saving}
             >
               Cancel
             </button>
             <button type="submit" className="primary-button" disabled={saving}>
               {saving && <LoaderCircle className="spinner" size={17} />}
-              {saving ? "Saving..." : "Create Category"}
+              {saving
+                ? "Saving..."
+                : editingId
+                  ? "Save Changes"
+                  : "Create Category"}
             </button>
           </div>
         </form>

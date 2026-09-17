@@ -33,6 +33,30 @@ export function formatDateOnly(value) {
   return date ? date.toLocaleDateString() : "-";
 }
 
+// An approved request whose expected return date has passed.
+export function isOverdue(request) {
+  if ((request?.status ?? "") !== "Approved") return false;
+  if (!request?.expectedReturnDate) return false;
+
+  const due = parseApiDate(request.expectedReturnDate);
+  if (!due) return false;
+
+  // Compare whole days so something due today is not flagged this morning.
+  const endOfDue = new Date(due);
+  endOfDue.setHours(23, 59, 59, 999);
+
+  return Date.now() > endOfDue.getTime();
+}
+
+export function daysOverdue(request) {
+  if (!isOverdue(request)) return 0;
+
+  const due = parseApiDate(request.expectedReturnDate);
+  const diff = Date.now() - due.getTime();
+
+  return Math.max(1, Math.floor(diff / 86400000));
+}
+
 // Most recent decision made on a request, if any.
 export function decidedAt(request) {
   return (

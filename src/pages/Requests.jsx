@@ -1,14 +1,23 @@
 import { Fragment, useEffect, useRef, useState } from "react";
-import { Check, ClipboardList, Clock, LoaderCircle, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  ClipboardList,
+  Clock,
+  LoaderCircle,
+  X,
+} from "lucide-react";
 import GlassCard from "../components/GlassCard";
 import Modal from "../components/Modal";
 import { useLocation } from "react-router-dom";
 
 import { requestApi } from "../services/api";
 import {
+  daysOverdue,
   decidedAt,
   formatDateOnly,
   formatDateTime as formatDate,
+  isOverdue,
 } from "../utils/datetime";
 
 function Requests() {
@@ -20,6 +29,7 @@ function Requests() {
   const [actionError, setActionError] = useState("");
   const [working, setWorking] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("Pending");
   const location = useLocation();
   const focusedRef = useRef(null);
 
@@ -141,6 +151,31 @@ function Requests() {
 
   const selectedStatus = (selected?.status ?? "Pending").toLowerCase();
 
+  const statusOf = (request) => request.status ?? "Pending";
+
+  const TABS = [
+    "Pending",
+    "Approved",
+    "Overdue",
+    "Returned",
+    "Rejected",
+    "Cancelled",
+    "All",
+  ];
+
+  const matchesTab = (request, tab) => {
+    if (tab === "All") return true;
+    if (tab === "Overdue") return isOverdue(request);
+    return statusOf(request) === tab;
+  };
+
+  const countFor = (tab) =>
+    requests.filter((request) => matchesTab(request, tab)).length;
+
+  const visibleRequests = requests.filter((request) =>
+    matchesTab(request, statusFilter)
+  );
+
   return (
     <div>
       <div className="page-header">
@@ -150,6 +185,21 @@ function Requests() {
           <p>Review and manage equipment requests.</p>
         </div>
       </div>
+
+      {!loading && requests.length > 0 && (
+        <div className="filter-tabs">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              className={`filter-tab ${statusFilter === tab ? "active" : ""}`}
+              onClick={() => setStatusFilter(tab)}
+            >
+              {tab}
+              <span className="filter-count">{countFor(tab)}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <GlassCard>
         {loading ? (
@@ -176,6 +226,18 @@ function Requests() {
               Request workflow is ready
             </div>
           </div>
+        ) : visibleRequests.length === 0 ? (
+          <div className="empty-state large">
+            <ClipboardList size={55} />
+            <h3>Nothing {statusFilter.toLowerCase()}</h3>
+            <p>No requests currently have this status.</p>
+            <button
+              className="secondary-button"
+              onClick={() => setStatusFilter("All")}
+            >
+              Show all requests
+            </button>
+          </div>
         ) : (
           <div className="table-container">
             {error && <p className="form-error">{error}</p>}
@@ -191,7 +253,7 @@ function Requests() {
                 </tr>
               </thead>
               <tbody>
-                {requests.map((request, index) => {
+                {visibleRequests.map((request, index) => {
                   const requestId = request.requestId ?? request.id ?? index;
                   const status = request.status ?? "Pending";
 
@@ -212,6 +274,12 @@ function Requests() {
                         >
                           {status}
                         </span>
+                        {isOverdue(request) && (
+                          <span className="status overdue-chip">
+                            <AlertTriangle size={11} />
+                            {daysOverdue(request)}d overdue
+                          </span>
+                        )}
                         {decidedAt(request) && (
                           <small className="status-stamp">
                             {formatDate(decidedAt(request))}

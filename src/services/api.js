@@ -62,6 +62,7 @@ export const requestApi = {
   approve: (id) => api.put(`/Request/${id}/approve`),
   reject: (id, remarks) => api.put(`/Request/${id}/reject`, { remarks }),
   return: (id) => api.put(`/Request/${id}/return`),
+  cancel: (id, email) => api.put(`/Request/${id}/cancel`, { email }),
 };
 
 export const userApi = {

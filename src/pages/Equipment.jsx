@@ -4,6 +4,7 @@ import {
   ChevronDown,
   Download,
   LoaderCircle,
+  Pencil,
   Plus,
   Search,
   Trash2,
@@ -23,9 +24,11 @@ export default function Equipment() {
   const [equipment, setEquipment] = useState([]);
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [requestEquipment, setRequestEquipment] = useState(null);
@@ -84,6 +87,7 @@ export default function Equipment() {
   }
 
   function openCreateModal() {
+    setEditingId(null);
     setForm({
       name: "",
       description: "",
@@ -91,6 +95,20 @@ export default function Equipment() {
       quantity: "1",
       availableQuantity: "1",
       categoryId: categories[0]?.categoryId?.toString() ?? "",
+    });
+    setError("");
+    setIsModalOpen(true);
+  }
+
+  function openEditModal(item) {
+    setEditingId(item.equipmentId);
+    setForm({
+      name: item.name ?? "",
+      description: item.description ?? "",
+      status: item.status ?? "Available",
+      quantity: String(item.quantity ?? 0),
+      availableQuantity: String(item.availableQuantity ?? 0),
+      categoryId: item.categoryId?.toString() ?? "",
     });
     setError("");
     setIsModalOpen(true);
@@ -130,21 +148,37 @@ export default function Equipment() {
       return;
     }
 
+    const payload = {
+      name: form.name.trim(),
+      description: form.description.trim(),
+      status: form.status,
+      quantity,
+      availableQuantity,
+      categoryId: form.categoryId ? Number(form.categoryId) : null,
+    };
+
     try {
       setSaving(true);
-      await equipmentApi.create({
-        name: form.name.trim(),
-        description: form.description.trim(),
-        status: form.status,
-        quantity,
-        availableQuantity,
-        categoryId: form.categoryId ? Number(form.categoryId) : null,
-      });
+
+      if (editingId) {
+        // The API recalculates availability from the quantity change itself.
+        await equipmentApi.update(editingId, {
+          ...payload,
+          equipmentId: editingId,
+        });
+      } else {
+        await equipmentApi.create(payload);
+      }
+
       setIsModalOpen(false);
+      setEditingId(null);
       await loadEquipment();
     } catch (requestError) {
-      console.error("Failed to create equipment:", requestError);
-      setError("Unable to create equipment. Please try again.");
+      console.error("Failed to save equipment:", requestError);
+      setError(
+        requestError.response?.data?.message ??
+          "Unable to save this equipment. Please try again."
+      );
     } finally {
       setSaving(false);
     }
@@ -287,10 +321,17 @@ export default function Equipment() {
     URL.revokeObjectURL(url);
   }
 
+  const countInCategory = (categoryId) =>
+    categoryId === "all"
+      ? equipment.length
+      : equipment.filter((item) => item.categoryId === categoryId).length;
+
   // Out-of-stock items stay visible (clearly marked) instead of silently
   // disappearing from the teacher's list.
-  const filteredEquipment = equipment.filter((item) =>
-    item.name?.toLowerCase().includes(search.toLowerCase())
+  const filteredEquipment = equipment.filter(
+    (item) =>
+      item.name?.toLowerCase().includes(search.toLowerCase()) &&
+      (categoryFilter === "all" || item.categoryId === categoryFilter)
   );
 
   return (
@@ -321,6 +362,33 @@ export default function Equipment() {
           />
         </div>
       </div>
+
+      {categories.length > 0 && (
+        <div className="filter-tabs">
+          <button
+            className={`filter-tab ${categoryFilter === "all" ? "active" : ""}`}
+            onClick={() => setCategoryFilter("all")}
+          >
+            All equipment
+            <span className="filter-count">{countInCategory("all")}</span>
+          </button>
+
+          {categories.map((category) => (
+            <button
+              key={category.categoryId}
+              className={`filter-tab ${
+                categoryFilter === category.categoryId ? "active" : ""
+              }`}
+              onClick={() => setCategoryFilter(category.categoryId)}
+            >
+              {category.name}
+              <span className="filter-count">
+                {countInCategory(category.categoryId)}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="glass-card table-card">
         {loading ? (
@@ -368,10 +436,18 @@ export default function Equipment() {
                   </td>
                   <td>{item.quantity}</td>
                   <td>{item.availableQuantity}</td>
-                  <td>{item.category?.name ?? item.categoryId}</td>
+                  <td>{item.categoryName ?? item.category?.name ?? "-"}</td>
                   <td>
                     <div className="table-actions">
                       {isAdmin ? (
+                        <>
+                        <button
+                          className="action-button edit"
+                          title="Edit equipment"
+                          onClick={() => openEditModal(item)}
+                        >
+                          <Pencil size={15} />
+                        </button>
                         <button
                           className="action-button delete"
                           title="Delete equipment"
@@ -382,6 +458,7 @@ export default function Equipment() {
                         >
                           <Trash2 size={15} />
                         </button>
+                        </>
                       ) : (
                         <button
                           className="secondary-button table-request-button"
@@ -409,7 +486,7 @@ export default function Equipment() {
       <Modal
         isOpen={isModalOpen}
         onClose={closeCreateModal}
-        title="Add Equipment"
+        title={editingId ? "Edit Equipment" : "Add Equipment"}
       >
         <form className="form" onSubmit={handleSubmit}>
           <div className="form-group">
@@ -520,7 +597,11 @@ export default function Equipment() {
             </button>
             <button type="submit" className="primary-button" disabled={saving}>
               {saving && <LoaderCircle className="spinner" size={17} />}
-              {saving ? "Saving..." : "Create Equipment"}
+              {saving
+                ? "Saving..."
+                : editingId
+                  ? "Save Changes"
+                  : "Create Equipment"}
             </button>
           </div>
         </form>

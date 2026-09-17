@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+  BellOff,
+  CheckCircle2,
   LoaderCircle,
   Search,
   ShieldCheck,
@@ -63,6 +65,34 @@ function UsersPage() {
       setError(
         requestError.response?.data?.message ??
           "Unable to update this user's role."
+      );
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function toggleActive(user) {
+    const userId = user.userId ?? user.id;
+    if (!userId) return;
+
+    const nextActive = !(user.isActive ?? true);
+
+    try {
+      setSavingId(userId);
+      setError("");
+      await userApi.update(userId, { ...user, isActive: nextActive });
+      setUsers((currentUsers) =>
+        currentUsers.map((listUser) =>
+          (listUser.userId ?? listUser.id) === userId
+            ? { ...listUser, isActive: nextActive }
+            : listUser
+        )
+      );
+    } catch (requestError) {
+      console.error("Failed to update account status:", requestError);
+      setError(
+        requestError.response?.data?.message ??
+          "Unable to change this account's status."
       );
     } finally {
       setSavingId(null);
@@ -146,6 +176,7 @@ function UsersPage() {
                   <th>Email</th>
                   <th>Role</th>
                   <th>Created</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -195,7 +226,35 @@ function UsersPage() {
                           : "-"}
                       </td>
                       <td>
+                        <span
+                          className={`status ${
+                            user.isActive ?? true ? "available" : "unavailable"
+                          }`}
+                        >
+                          {user.isActive ?? true ? "Active" : "Suspended"}
+                        </span>
+                      </td>
+                      <td>
                         <div className="table-actions">
+                          <button
+                            className="action-button edit"
+                            title={
+                              isMaster
+                                ? "The master admin cannot be suspended"
+                                : user.isActive ?? true
+                                  ? "Suspend this account"
+                                  : "Reactivate this account"
+                            }
+                            disabled={isMaster || savingId === userId}
+                            onClick={() => toggleActive(user)}
+                          >
+                            {user.isActive ?? true ? (
+                              <BellOff size={15} />
+                            ) : (
+                              <CheckCircle2 size={15} />
+                            )}
+                          </button>
+
                           <button
                             className="action-button delete"
                             title={

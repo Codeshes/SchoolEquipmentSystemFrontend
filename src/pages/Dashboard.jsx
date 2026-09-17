@@ -5,6 +5,7 @@ import {
   Folder,
   ClipboardList,
   CheckCircle2,
+  AlertTriangle,
   ArrowUpRight,
   Clock,
 } from "lucide-react";
@@ -13,6 +14,7 @@ import GlassCard from "../components/GlassCard";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categoryApi, equipmentApi, requestApi } from "../services/api";
 import { isOutOfStock, stockClass, stockLabel } from "../utils/stock";
+import { isOverdue } from "../utils/datetime";
 
 function Dashboard() {
   const { user, role } = useAuth();
@@ -83,6 +85,8 @@ function Dashboard() {
     (request) => (request.status ?? "Pending").toLowerCase() === "pending"
   ).length;
 
+  const overdueRequests = requests.filter(isOverdue).length;
+
   const firstName = user?.displayName?.split(" ")[0] ?? "there";
 
   const stats = [
@@ -108,6 +112,12 @@ function Dashboard() {
       title: "Pending Requests",
       value: pendingRequests,
       icon: Clock,
+      color: "orange",
+    },
+    {
+      title: "Overdue",
+      value: overdueRequests,
+      icon: AlertTriangle,
       color: "orange",
     },
   ];
